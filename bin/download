@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 
-set -Eeuo pipefail
+current_script_path="${BASH_SOURCE[0]}"
+plugin_dir=$(dirname "$(dirname "${current_script_path}")")
+
+# shellcheck source=./lib/utils.bash
+source "${plugin_dir}/lib/utils.bash"
 
 # See https://github.com/asdf-vm/asdf/blob/master/docs/plugins-create.md#github-api-rate-limiting
-function fetch() {
+fetch() {
   curl --silent --fail --show-error --location ${GITHUB_TOKEN:+-H "Authorization: token ${GITHUB_TOKEN}"} "$@"
 }
 
@@ -13,6 +17,10 @@ if [[ "${ASDF_INSTALL_TYPE:-version}" == 'ref' ]]; then
 fi
 
 mkdir -p "${ASDF_DOWNLOAD_PATH}"
+
+if [ "${ASDF_INSTALL_VERSION:-latest}" = "latest" ]; then
+  ASDF_INSTALL_VERSION="$(list_versions | sort_versions | tail -n 1)"
+fi
 
 echo "Downloading pre-commit v${ASDF_INSTALL_VERSION}"
 

@@ -1,39 +1,9 @@
 #!/usr/bin/env bash
 
-set -Eeuo pipefail
+current_script_path="${BASH_SOURCE[0]}"
+plugin_dir=$(dirname "$(dirname "${current_script_path}")")
 
-# See https://github.com/asdf-vm/asdf/blob/master/docs/plugins-create.md#github-api-rate-limiting
-function fetch() {
-  curl --silent --fail --show-error --location ${GITHUB_TOKEN:+-H "Authorization: token ${GITHUB_TOKEN}"} "$@"
-}
+# shellcheck source=./lib/utils.bash
+source "${plugin_dir}/lib/utils.bash"
 
-function get_next() {
-  fetch --head "$@" \
-    | grep -i "^link" \
-    | cut -d: -f2- \
-    | tr , \\n \
-    | grep 'rel="next"' \
-    | awk -F '<|>' '{ print $2 }' # extract URL from between angle-brackets
-}
-
-function fetch_paged() {
-  curr=$1
-
-  while :; do
-    fetch "${curr}"
-    curr="$(get_next "${curr}")" || break
-  done
-}
-
-function sort_versions() {
-  sed 'h; s/[+-]/./g; s/.p\([[:digit:]]\)/.z\1/; s/$/.z/; G; s/\n/ /' \
-    | LC_ALL=C sort -t. -k 1,1 -k 2,2n -k 3,3n -k 4,4n -k 5,5n \
-    | awk '{print $2}'
-}
-
-fetch_paged "https://api.github.com/repos/pre-commit/pre-commit/releases" \
-  | grep -Eo '"tag_name":\s*"[^"]+"' \
-  | cut -d\" -f4 \
-  | cut -c2- \
-  | sort_versions \
-  | xargs # remove newlines
+list_versions | sort_versions
