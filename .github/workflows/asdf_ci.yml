@@ -32,6 +32,7 @@ jobs:
         with:
           command: pre-commit --version
           version: ${{ matrix.version }}
+          gitref: ${{ github.head_ref || github.ref_name }} # different github variables depending on whether we're running on a branch or a PR
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   lint:
