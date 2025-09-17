@@ -10,7 +10,7 @@ cut
 grep
 mkdir
 mv
-python
+python3
 sed
 sort
 xargs"
